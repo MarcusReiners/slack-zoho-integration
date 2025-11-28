@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "env": {
+    "ZOHO_CLIENT_ID": "@zoho_client_id",
+    "ZOHO_CLIENT_SECRET": "@zoho_client_secret",
+    "ZOHO_REDIRECT_URI": "@zoho_redirect_uri",
+    "SLACK_BOT_TOKEN": "@slack_bot_token",
+    "SLACK_SIGNING_SECRET": "@slack_signing_secret"
+  }
+}
