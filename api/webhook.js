@@ -7,18 +7,33 @@ module.exports = async (req, res) => {
 
   try {
     const notification = req.body;
-    console.log('Webhook empfangen:', notification);
+    console.log('Webhook empfangen:', JSON.stringify(notification, null, 2));
+
+    // Prüfe ob es eine eingehende E-Mail ist (nicht gesendet)
+    if (notification.eventType === 'mail.sent' || notification.type === 'sent') {
+      console.log('Gesendete E-Mail ignoriert');
+      return res.status(200).json({ message: 'Sent email ignored' });
+    }
+
+    // Extrahiere E-Mail Details
+    const from = notification.fromAddress || notification.from || 'Unbekannt';
+    const subject = notification.subject || 'Kein Betreff';
+    const body = notification.content || notification.body || notification.summary || '';
+    const messageId = notification.messageId || notification.mailId;
+    
+    // Kürze Body wenn zu lang
+    const shortBody = body.length > 300 ? body.substring(0, 300) + '...' : body;
 
     // Nachricht an Slack senden
     const slackMessage = {
       channel: process.env.SLACK_CHANNEL_ID,
-      text: '📧 Neue E-Mail empfangen',
+      text: `📧 Neue E-Mail von ${from}`,
       blocks: [
         {
           type: 'header',
           text: {
             type: 'plain_text',
-            text: '📧 Neue E-Mail',
+            text: '📧 Neue E-Mail empfangen',
             emoji: true
           }
         },
@@ -27,11 +42,27 @@ module.exports = async (req, res) => {
           fields: [
             {
               type: 'mrkdwn',
-              text: `*Von:*\n${notification.from || 'Unbekannt'}`
+              text: `*Von:*\n${from}`
             },
             {
               type: 'mrkdwn',
-              text: `*Betreff:*\n${notification.subject || 'Kein Betreff'}`
+              text: `*Betreff:*\n${subject}`
+            }
+          ]
+        },
+        {
+          type: 'section',
+          text: {
+            type: 'mrkdwn',
+            text: `*Nachricht:*\n${shortBody || '_Keine Vorschau verfügbar_'}`
+          }
+        },
+        {
+          type: 'context',
+          elements: [
+            {
+              type: 'mrkdwn',
+              text: `Message ID: ${messageId || 'N/A'}`
             }
           ]
         }
